@@ -25,32 +25,34 @@ library(ggsci)
 library(readxl)
 library(ggrepel)
 library(ggpubr)
+library(openxlsx)
 ```
 
 ```{r}
 # data <- read_excel("~/CEEW/GHG Platform/Economy-wide/GHGPI-Economy-wide-Estimates-2005-to-2018.xlsx",sheet = "Economywide estimation") %>% 
-  data <- read_excel("data/GHG_Gujrat-Final-Energy-2005-to-2020.xlsx", 
+  data <- read_excel("C:/Users/Rishabh/Documents/GitHub/GJ_historical_emissions_energy/data/GHG_Gujrat-Final-Energy-2005-to-2020.xlsx", 
     sheet = "consolidated") %>% 
   # select(-27) %>% 
   pivot_longer(`2005`:`2020`,names_to = "Year") %>% 
   filter(Gas %in% "CO2e (t) GWP-AR6") %>%
   filter(State %in% "Gujarat")
 
-data_ippu <- read_excel("data/IPPU Emissions-Revised_Final 04-02-24_20240402.xlsx", 
+data_ippu <- read_excel("C:/Users/Rishabh/Documents/GitHub/GJ_historical_emissions_energy/data/IPPU Emissions-Revised_Final 04-02-24_20240402.xlsx", 
     sheet = "GHG Emissions Statewise", range = "A4:AP2193") %>% filter(State=="Gujarat",Gas=="CO2EqGWP - AR6") %>% 
 select(-c(12:27)) %>% 
   pivot_longer(c(`2005`:`2019`),names_to = "Year",values_to = "value") %>% 
   select(-c(5:6)) %>% 
   mutate("Level 7"="")
 
-data_waste_afolu <- read_excel("data/GHGPI-Economy-wide-Estimates-2005-to-2018.xlsx",     sheet = "Economywide estimation") %>% 
+data_waste_afolu <- read_excel("C:/Users/Rishabh/Documents/GitHub/GJ_historical_emissions_energy/data/GHGPI-Economy-wide-Estimates-2005-to-2018.xlsx",     sheet = "Economywide estimation") %>% 
   filter(Gas %in% "CO2e (t) GWP-AR6") %>%
   filter(State %in% "Gujarat") %>% 
   filter(`Level 1` %in% c("Waste","Agriculture, Forestry and Other Land Use")) %>% 
   select(-c("Economic Activity","Product")) %>% 
   pivot_longer(c(`2005`:`2018`),names_to = "Year",values_to = "value")
 
-data <- bind_rows(data,data_ippu,data_waste_afolu) 
+data <- bind_rows(data,data_ippu,data_waste_afolu)
+#write.xlsx(data, file = "consolidated_sheet.xlsx")
  
 
 ```
@@ -162,13 +164,17 @@ ggsave("output_plots/emissions_by_fuel_patchwork.png",
 level3_energy <- data %>%
   filter(`Level 1`=="Energy") %>% 
   #  filter(!is.na(`Emission / Removal / Bunker`)) %>% 
+  mutate(`Level 3` = case_when(
+    `Level 3` %in% c("Captive Power Plants", "Public Electricity Generation") ~ "Electricity Generation",
+    TRUE ~ `Level 3`
+  )) %>%
   group_by(`Level 3`,Year) %>% 
    summarise(value=sum(value)) %>% 
   ungroup() %>% 
   group_by(Year) %>% 
   mutate(percent=round(value/sum(value)*100,0)) %>% 
   ungroup() %>% 
-  mutate(sector=if_else(percent<6,"Other",`Level 3`,)) %>% 
+  mutate(sector=if_else(percent<7,"Other",`Level 3`,)) %>% 
   group_by(Year,sector) %>% 
   summarise(value=sum(value)) %>% 
   mutate(percent=round(value/sum(value)*100,0))
@@ -190,7 +196,7 @@ ggplot() +
   scale_fill_brewer(type = "qual")+
   theme(legend.position = "top",
         axis.text.x = element_text(size = 9, angle = 45, vjust = 0.8, hjust = 0.8))+
-  guides(fill = guide_legend(nrow = 3))  # Set the number of rows in the legend
+  guides(fill = guide_legend(nrow = 2))  # Set the number of rows in the legend
 
 ggsave("output_plots/energy_emissions.png",
   device = "png", dpi = "print",
@@ -202,19 +208,20 @@ a <- ggplot()+
   geom_area(data = level3_energy,mapping = aes(x = Year, y = value/10^6,fill=sector,group=interaction(sector)))+
 geom_line(data = level3_energy, mapping = aes(x = Year, y = value/10^6, group = interaction(sector)), show.legend = F,position = position_stack(),color="grey") +
   geom_point(data = level3_energy, mapping = aes(x = Year, y = value/10^6, group = interaction(sector)), show.legend = F,position = position_stack(),color="grey")+ 
-   geom_text(data = level3_energy_tot, aes(x = Year, y = total/10^6, label = paste0(round(total/10^6, 0))), vjust = -0.5, color = "black", size = 3)+
+   geom_text(data = level3_energy_tot, aes(x = Year, y = total/10^6, label = paste0(round(total/10^6, 0))), vjust = -0.5, color = "black", size = 2.5)+
   ggthemes::theme_pander() +
   labs(x = "", y = "Emissions (MtCO2e)",title = "Energy sector emissions")+
-  scale_fill_brewer(type = "qual")+
+  scale_fill_viridis_d(option = "viridis") +
   theme(legend.position = "top",
         axis.text.x = element_text(size = 9, angle = 45, vjust = 0.8, hjust = 0.8))+
-  guides(fill = guide_legend(nrow = 2))  # Set the number of rows in the legend
+  guides(fill = guide_legend(nrow = 2))+  # Set the number of rows in the legend 
+  scale_y_continuous(expand = expansion(mult = c(0, 0.1)))
 
  b <- ggplot(data = level3_energy %>% filter(Year==2018),mapping = aes(x = Year, y = value/10^6))+
   geom_col(aes(fill=sector))+
- geom_text(mapping=aes(fill = sector, label = ifelse(percent > 2, paste0(percent, "%"), "")), position = position_stack(vjust = 0.5), size = 3, color = "black")+
+ geom_text(mapping=aes(fill = sector, label = ifelse(percent > 2, paste0(percent, "%"), "")), position = position_stack(vjust = 0.5), size = 2.5, color = "white")+
   theme_void()+ 
-  guides(colour = "none", fill = "none")+ scale_fill_brewer(type = "qual")
+  guides(colour = "none", fill = "none")+ scale_fill_viridis_d(option = "viridis")
 
 library(patchwork)
 (a|b) + 
