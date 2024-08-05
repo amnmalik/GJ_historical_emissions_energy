@@ -52,6 +52,7 @@ data_waste_afolu <- read_excel("data/GHGPI-Economy-wide-Estimates-2005-to-2018.x
 
 data <- bind_rows(data,data_ippu,data_waste_afolu) 
  
+writexl::write_xlsx(data,"compiled_data_emissions.xlsx")
 
 ```
 
@@ -97,10 +98,11 @@ fuel_wise <- data %>%
 #Type 1
 d <- ggplot() +
   geom_col(fuel_wise,mapping = aes(x = Year, y = value/10^6, fill = fuels))+
-   geom_text(fuel_wise,mapping=aes(x = Year, y = value/10^6, fill = fuels, label = ifelse(percent > 2, paste0(percent, "%"), "")), position = position_stack(vjust = 0.5), size = 2, color = "black")+# Adjust the position and size of the text
+   geom_text(fuel_wise,mapping=aes(x = Year, y = value/10^6, fill = fuels, label = ifelse(percent > 2, paste0(percent, "%"), "")), position = position_stack(vjust = 0.5), size =2.2, color = "white")+# Adjust the position and size of the text
    ggthemes::theme_pander() +
   labs(x = "", y = "Emissions (MtCO2e)",title = "Energy sector emissions")+
-  scale_fill_brewer(type = "qual")+
+  theme_pubclean(base_size = 12)+
+    scale_fill_viridis_d()+
   theme(legend.position = "top",
         axis.text.x = element_text(size = 9, angle = 45, vjust = 0.8, hjust = 0.8))+
   guides(fill = guide_legend(nrow = 2))+  # Set the number of rows in the legend
@@ -130,11 +132,13 @@ data2 <- fuel_wise %>%
   filter(!is.na(value))
 
 f <- ggplot() +
-  geom_col(data2, mapping = aes(x = Year, y = value/10^6, fill = fuels))+
+  geom_col(data2 %>% filter(sector %in% c("Electricity Generation","Industries")), mapping = aes(x = Year, y = value/10^6, fill = fuels))+
   facet_wrap(~sector,scales = "free")+
   ggthemes::theme_pander() +
   labs(x = "", y = "Emissions (MtCO2e)",title = "Emissions by fuel and enduse sector")+
-  scale_fill_brewer(type = "qual")+
+theme_pubclean(base_size = 12)+
+    scale_fill_viridis_d()+
+
   theme(legend.position = "top",
         axis.text.x = element_text(size = 7, angle = 45, vjust = 0.8, hjust = 0.8))+
   guides(fill = guide_legend(nrow = 2))+  # Set the number of rows in the legend
@@ -688,12 +692,13 @@ power_total <- power %>%
 ggplot() +
   geom_col(power,mapping = aes(x = Year, y = value/1000, fill = Parameter))+
 geom_text(power,mapping=aes(x = Year, y = value/1000, fill=Parameter, label = ifelse(percent > 2, paste0(round(percent,0), "%"), "")),
-            position = position_stack(vjust = 0.5), size = 3, color = "black")+ # Adjust the position and size of the text
+            position = position_stack(vjust = 0.5), size = 3, color = "white")+ # Adjust the position and size of the text
   geom_text(data = power_total, aes(x = Year, y = total_value/1000, label = round(total_value/1000,0)),
-            vjust = -0.5, size = 2, color = "black")+  # Add total values on top of bars
- ggthemes::theme_pander() +
-  labs(x = "", y = "Electricity Generation (BU)",caption = "Source: Niti Aayog")+
-  scale_fill_tableau()+
+            vjust = -0.5, size =3, color = "black")+  # Add total values on top of bars
+
+  labs(x = "", y = "Electricity Generation (BU)",caption = "Source: Niti Aayog Climate and Energy Dashboard")+
+theme_pubclean(base_size = 12)+
+    scale_fill_viridis_d()+
   theme(legend.title = element_blank(),legend.position = "top",
         axis.text.x = element_text(size = 9, angle = 45, vjust = 0.8, hjust = 0.8))+
 guides(fill = guide_legend(nrow = 2))  # Set the number of rows in the legend
