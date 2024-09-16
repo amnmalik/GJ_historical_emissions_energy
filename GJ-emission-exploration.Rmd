@@ -1,0 +1,117 @@
+---
+title: "Gujarat emissions"
+output: html_document
+date: "2023-09-11"
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+
+library(tidyverse)
+library(ggthemes)
+library(ggsci)
+library(readxl)
+```
+
+```{r}
+data <- read_excel("~/CEEW/ghgplatformsheets/GHGPI-Energy-Estimates-by-CSTEP-2005-to-2018(1)_forEarthmetry.xlsx") %>%  
+  pivot_longer(`2005`:`2019`,names_to = "Year")
+```
+
+```{r}
+  data %>%
+  filter(Gas %in% "CO2e (t) GWP-AR6") %>%
+  filter(State %in% "Gujarat") %>%
+  filter(!is.na(value)) %>%
+  group_by(Year) %>%  # Group by the 'Year' variable
+  mutate(total = sum(value)) %>%  # Calculate the total for each year
+  ggplot() +
+  aes(x = Year, y = value, fill = `Level 3`) +
+  geom_col() +
+ ggthemes::theme_pander() +
+  labs(x = "", y = "Emissions (tCO2e)")+
+  scale_fill_brewer(type = "qual")
+```
+
+```{r}
+cap_data <- read_excel("power_data.xlsx", 
+    sheet = "Capacity") %>% 
+  pivot_longer(2:6,names_to = "source",values_to = "value") %>% 
+    mutate(category="Capacity",unit= "MW") %>% 
+  rename(Year=YEAR) %>% 
+  group_by(Year) %>% 
+  mutate(share=value/sum(value)*100) %>% 
+  ungroup()
+
+gen_data <- read_excel("power_data.xlsx",sheet = "Generation") %>% 
+  mutate(HYDRO=HYDRO+`SMALL HYDRO`,
+         BIOMASS=BIOMASS+BAGASSE,
+         GAS=`THER (GT)`) %>%
+  select(-c("THER (GT)","SMALL HYDRO","BAGASSE")) %>% 
+  pivot_longer(`BIOMASS`:`GAS`,names_to = "source",values_to = "value") %>% 
+  mutate(category="Generation",unit= "MWh") %>% 
+      rename(Year=YEAR)  %>% 
+  group_by(Year) %>% 
+  mutate(share=value/sum(value)*100) %>% 
+  ungroup()
+  
+
+
+power_data <- bind_rows(cap_data,gen_data)
+
+writexl::write_xlsx(power_data,"gen_data_GJ.xlsx")
+
+# Capacity Data
+ggplot()+
+  geom_col(power_data %>% filter(category=="Capacity",Year!=2023), mapping =  aes(x=Year,y=value,fill=source))+
+  scale_fill_brewer(type = "qual")+
+  geom_text(gen_data %>% filter(category=="Capacity") %>% group_by(Year) %>% summarise(value=sum(value)) %>% ungroup(),
+            mapping = aes(x=Year,y=value,label=round(value,0)),vjust=-0.5)+
+  labs(x="",y="Capacity (MW)",title = "Power capacity")+
+  theme_pander(base_size = 14)+
+  theme(legend.text = element_text(size = 12))+
+  scale_x_continuous(breaks=unique(power_data$Year))
+ 
+ggsave("power_cap.png",dpi = "print",width = 8,height = 6,units = "in",bg = "white")
+
+#Generation Data
+ggplot()+
+  geom_col(gen_data %>% filter(category=="Generation"), mapping =  aes(x=YEAR,y=value/1000,fill=source))+
+  scale_fill_cosmic()+
+  geom_text(gen_data %>% filter(category=="Generation") %>% group_by(YEAR) %>% summarise(value=sum(value)) %>% ungroup(),
+            mapping = aes(x=YEAR,y=value/1000,label=round(value/1000,0)),vjust=-0.5)+
+  labs(x="",y="Generation (TWh)",title = "Power generation")+
+  theme_pander(base_size = 14)+
+  theme(legend.text = element_text(size = 12))+
+  scale_x_continuous(breaks=unique(gen_data$YEAR))
+ 
+ggsave("power_gen.png",dpi = "print",width = 8,height = 6,units = "in",bg = "white")
+
+
+```
+
+```{r}
+
+industry <- data %>% filter(`Level 3` =="Industries", Gas=="CO2EqGTP - AR6")
+
+ggplot()+
+  geom_col(industry, mapping =  aes(x=Year,y=value,fill=`Level 4`))+
+  scale_fill_()
+  geom_text(gen_data %>% filter(category=="Generation") %>% group_by(YEAR) %>% summarise(value=sum(value)) %>% ungroup(),
+            mapping = aes(x=YEAR,y=value/1000,label=round(value/1000,0)),vjust=-0.5)+
+  labs(x="",y="Generation (TWh)",title = "Power generation")+
+  theme_pander(base_size = 14)+
+  theme(legend.text = element_text(size = 12))+
+  scale_x_continuous(breaks=unique(gen_data$YEAR))
+```
+
+```{r}
+
+
+```
+
