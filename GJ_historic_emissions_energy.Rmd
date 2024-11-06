@@ -26,7 +26,20 @@ library(readxl)
 library(ggrepel)
 library(ggpubr)
 library(openxlsx)
+library(extrafont)
+#font_import() # need to do this only once, so uncomment and run once
+loadfonts(device = "win")
 ```
+
+
+```{r}
+# Color Palette CEEW and font type
+my_custom_palette <- c("#575756", "#9d9d9c","#D5d7dc", "#C3E5F5", "#71c9eb", "#009cd8", "#8db824","#b4d48c")
+
+theme_set(theme_pubclean(base_size = 16, base_family = "Calibri"))
+```
+
+
 
 ```{r}
 # data <- read_excel("~/CEEW/GHG Platform/Economy-wide/GHGPI-Economy-wide-Estimates-2005-to-2018.xlsx",sheet = "Economywide estimation") %>% 
@@ -79,9 +92,9 @@ level1_tot <- level1 %>%
 ggplot() +
     geom_col(level1, mapping=aes(x = Year, y = value/10^6, fill = `Level 1`,label = paste0(percent, "%")))+
  geom_text(data = level1_tot, aes(x = Year, y = tot/10^6, label = paste0(round(tot/10^6, 0))), vjust = -0.5, color = "black", size = 3) +
- ggthemes::theme_pander() +
+ #ggthemes::theme_pander() +
   labs(x = "", y = "Emissions (MtCO2e)",caption  = "IPPU emissions from 2020 unavailable. Waste and AFOLU emissions unavailable for 2019 and 2020")+
-  scale_fill_brewer(type = "qual")+
+  scale_fill_manual(values = my_custom_palette)+
   theme(legend.position = "top",
         axis.text.x = element_text(size = 9, angle = 45, vjust = 0.8, hjust = 0.8))+
   guides(fill = guide_legend(nrow = 2))  # Set the number of rows in the legend
@@ -101,10 +114,10 @@ fuel_wise <- data %>%
 d <- ggplot() +
   geom_col(fuel_wise,mapping = aes(x = Year, y = value/10^6, fill = fuels))+
    geom_text(fuel_wise,mapping=aes(x = Year, y = value/10^6, fill = fuels, label = ifelse(percent > 2, paste0(percent, "%"), "")), position = position_stack(vjust = 0.5), size =2.5, color = "white")+# Adjust the position and size of the text
-   ggthemes::theme_pander() +
+ #  ggthemes::theme_pander() +
   labs(x = "", y = "Emissions (MtCO2e)",title = "Energy sector emissions")+
   theme_pubclean(base_size = 14)+
-    scale_fill_viridis_d()+
+    scale_fill_manual(values = my_custom_palette)+
   theme(legend.position = "top",
         axis.text.x = element_text(size = 10, angle = 45, vjust = 0.8, hjust = 0.8))+
   guides(fill = guide_legend(nrow = 2))+  # Set the number of rows in the legend
@@ -136,10 +149,9 @@ data2 <- fuel_wise %>%
 f <- ggplot() +
   geom_col(data2 %>% filter(sector %in% c("Electricity Generation","Industries")), mapping = aes(x = Year, y = value/10^6, fill = fuels))+
   facet_wrap(~sector,scales = "free")+
-  ggthemes::theme_pander() +
+  #ggthemes::theme_pander() +
   labs(x = "", y = "Emissions (MtCO2e)",title = "Emissions by fuel and enduse sector")+
-theme_pubclean(base_size = 14)+
-    scale_fill_viridis_d()+
+    scale_fill_manual(values = my_custom_palette)+
 
   theme(legend.position = "top",
         axis.text.x = element_text(size = 12, angle = 45, vjust = 0.8, hjust = 0.8))+
@@ -197,7 +209,7 @@ ggplot() +
  geom_text(level3_energy,mapping=aes(x = Year, y = value/10^6, fill = sector, label = ifelse(percent > 2, paste0(percent, "%"), "")), position = position_stack(vjust = 0.5), size = 3, color = "black")+# Adjust the position and size of the text
  ggthemes::theme_pander() +
   labs(x = "", y = "Emissions (MtCO2e)",title = "Energy sector emissions")+
-  scale_fill_brewer(type = "qual")+
+  scale_fill_manual(values = my_custom_palette)+
   theme(legend.position = "top",
         axis.text.x = element_text(size = 9, angle = 45, vjust = 0.8, hjust = 0.8))+
   guides(fill = guide_legend(nrow = 2))  # Set the number of rows in the legend
@@ -214,7 +226,7 @@ geom_line(data = level3_energy, mapping = aes(x = Year, y = value/10^6, group = 
   geom_point(data = level3_energy, mapping = aes(x = Year, y = value/10^6, group = interaction(sector)), show.legend = F,position = position_stack(),color="grey")+ 
    geom_text(data = level3_energy_tot, aes(x = Year, y = total/10^6, label = paste0(round(total/10^6, 0))), vjust = -0.5, color = "black", size = 3)+
   theme_pubclean(base_size = 14)+
-    scale_fill_viridis_d()+
+    scale_fill_manual(values = my_custom_palette)+
   labs(x = "", y = "Emissions (MtCO2e)",title = "Energy sector emissions")+
 
   theme(legend.position = "top",
@@ -225,10 +237,10 @@ geom_line(data = level3_energy, mapping = aes(x = Year, y = value/10^6, group = 
 
  b <- ggplot(data = level3_energy %>% filter(Year==2020),mapping = aes(x = Year, y = value/10^6))+
   geom_col(aes(fill=sector))+
- geom_text(mapping=aes(fill = sector, label = ifelse(percent > 2, paste0(percent, "%"), "")), position = position_stack(vjust = 0.5), size = 3, color = "white")+
+ geom_text(mapping=aes(fill = sector, label = ifelse(percent > 3, paste0(percent, "%"), "")), position = position_stack(vjust = 0.5), size = 3, color = "white")+
  theme_void(base_size = 14)+
-    scale_fill_viridis_d()+
-  guides(colour = "none", fill = "none")+ scale_fill_viridis_d(option = "viridis")
+    scale_fill_manual(values = my_custom_palette)+
+  guides(colour = "none", fill = "none")
 
 library(patchwork)
 (a|b) + 
@@ -707,8 +719,8 @@ geom_text(power,mapping=aes(x = Year, y = value/1000, fill=Parameter, label = if
             vjust = -0.5, size =3, color = "black")+  # Add total values on top of bars
 
   labs(x = "", y = "Electricity Generation (BU)",caption = "Source: Niti Aayog Climate and Energy Dashboard")+
-theme_pubclean(base_size = 12)+
-    scale_fill_viridis_d()+
+#theme_pubclean(base_size = 12)+
+    scale_fill_manual(values = my_custom_palette)+
   theme(legend.title = element_blank(),legend.position = "top",
         axis.text.x = element_text(size = 9, angle = 45, vjust = 0.8, hjust = 0.8))+
 guides(fill = guide_legend(nrow = 2))  # Set the number of rows in the legend
@@ -764,7 +776,7 @@ serv <- left_join(serv1,serv2,by="...1") %>% rename("State"="...1") %>% pivot_lo
 GVA_economy <- bind_rows(agri,bank,cons,ind,manf,serv) %>%
   mutate(State=trimws(State,"right")) %>% 
    group_by(Year,State) %>% 
-  mutate(percent=round(value/sum(value)*100,0))
+  mutate(percent=round(value/sum(value)*100,0)) %>% 
   filter(State=="Gujarat") %>% 
   ungroup() %>% 
   group_by(sector) %>%
@@ -779,9 +791,9 @@ ggplot(GVA_economy %>% filter(!Year %in% '2022-23')) +
 geom_text(aes(x = Year, y = value/100000,fill=sector,label = ifelse(percent > 2, paste0(percent, "%"), "")),
             position = position_stack(vjust = 0.5), size = 3, color = "black")+ 
 geom_text(data = tot %>% filter(!Year %in% '2022-23'),mapping = aes(x=Year, y=value/100000,label=round(value/100000,0),  vjust=-0.5))+
-ggthemes::theme_pander() +
+#ggthemes::theme_pander() +
   labs(x = "", y = "GVA constant prices (000 crore rupees)",caption = "RBI handbook of Indian States")+
-  scale_fill_uchicago()+
+  scale_fill_manual(values = my_custom_palette)+
   theme(legend.position = "top",
         axis.text.x = element_text(size = 9, angle = 45, vjust = 0.8, hjust = 0.8))+
 guides(fill = guide_legend(nrow = 2))  # Set the number of rows in the legend
@@ -830,8 +842,8 @@ ggplot()+
 geom_text(niti,mapping = aes(x = Year, y = value/100000,fill=Sector,label = ifelse(percent > 2, paste0(round(percent,0), "%"), "")),
             position = position_stack(vjust = 0.5), size = 3, color = "white")+ 
 geom_text(data = niti_tot %>% filter(!Year %in% '2022-23'),mapping = aes(x=Year, y=value/100000,label=round(value/100000,0),  vjust=-0.5))+
-theme_pubclean(base_size = 12)+
-    scale_fill_viridis_d()+
+#theme_pubclean(base_size = 12)+
+    scale_fill_manual(values = my_custom_palette)+
   labs(x = "", y = "GVA constant prices (000 crore rupees)",caption = "RBI handbook of Indian States")+
  
   theme(legend.position = "top",
