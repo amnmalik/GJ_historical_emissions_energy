@@ -21,6 +21,7 @@ knitr::opts_chunk$set(echo = FALSE, message = F, warning = F, cache = T)
 
 library(tidyverse)
 library(ggthemes)
+library(patchwork)
 library(ggsci)
 library(readxl)
 library(ggrepel)
@@ -34,9 +35,20 @@ loadfonts(device = "win")
 
 ```{r}
 # Color Palette CEEW and font type
-my_custom_palette <- c("#575756", "#9d9d9c","#D5d7dc", "#C3E5F5", "#71c9eb", "#009cd8", "#8db824","#b4d48c")
+my_custom_palette <- c("#575756", "#9d9d9c", "#D5d7dc", "#C3E5F5", "#71c9eb", "#009cd8", "#8db824", "#b4d48c", "#DDE9BA", "#EA5813", "#F49A70", "#FACAB1")
 
-theme_set(theme_pubclean(base_size = 16, base_family = "Calibri"))
+my_custom_theme <-theme_pubr(base_size = 14, base_family = "Source Sans Pro")+
+  theme(
+    legend.justification = c(0, 1),
+    legend.position = "top", legend.title = element_blank(),
+ #    legend.box = "horizontal",
+    NULL
+  )
+
+# Set the custom theme as the default
+theme_set(my_custom_theme)
+
+
 ```
 
 
@@ -48,10 +60,10 @@ theme_set(theme_pubclean(base_size = 16, base_family = "Calibri"))
   # select(-27) %>% 
   pivot_longer(`2005`:`2020`,names_to = "Year") %>% 
   filter(Gas %in% "CO2e (t) GWP-AR6") %>%
-  filter(State %in% "Gujarat")
+  filter(State %in% "Odisha")
 
 data_ippu <- read_excel("data/IPPU Emissions-Revised_Final 04-02-24_20240402.xlsx", 
-    sheet = "GHG Emissions Statewise", range = "A4:AP2193") %>% filter(State=="Gujarat",Gas=="CO2EqGWP - AR6") %>% 
+    sheet = "GHG Emissions Statewise", range = "A4:AP2193") %>% filter(State=="Odisha",Gas=="CO2EqGWP - AR6") %>% 
 select(-c(12:27)) %>% 
   pivot_longer(c(`2005`:`2019`),names_to = "Year",values_to = "value") %>% 
   select(-c(5:6)) %>% 
@@ -95,9 +107,8 @@ ggplot() +
  #ggthemes::theme_pander() +
   labs(x = "", y = "Emissions (MtCO2e)",caption  = "IPPU emissions from 2020 unavailable. Waste and AFOLU emissions unavailable for 2019 and 2020")+
   scale_fill_manual(values = my_custom_palette)+
-  theme(legend.position = "top",
-        axis.text.x = element_text(size = 9, angle = 45, vjust = 0.8, hjust = 0.8))+
-  guides(fill = guide_legend(nrow = 2))  # Set the number of rows in the legend
+  theme(axis.text.x = element_text(size = 9, angle = 45, vjust = 0.8, hjust = 0.8))+
+  guides(fill = guide_legend(nrow = 1))  # Set the number of rows in the legend
 
 ```
 
@@ -164,7 +175,6 @@ ggsave("output_plots/emissions_by_fuel_and_enduse.png",
   width = 8, height = 6
 )  
   
-library(patchwork)
 d+f+plot_layout(guides = 'collect',)+plot_annotation(tag_levels = 'a')&theme(legend.position = "top",plot.title = element_blank())&guides(fill = guide_legend(nrow = 1))
 
 ggsave("output_plots/emissions_by_fuel_patchwork.png",
