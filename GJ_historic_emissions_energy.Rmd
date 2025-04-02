@@ -770,7 +770,7 @@ niti <- read_excel("data/State_GVA_Trends_GJ.xlsx") %>%
   group_by(Year) %>%
   mutate(percent = value / sum(value) * 100)
 
-writexl::write_xlsx(niti, "niti.xlsx")
+writexl::write_xlsx(niti, "output_data/niti.xlsx")
 
 niti_tot <- niti %>%
   group_by(Year) %>%
