@@ -13,11 +13,9 @@ editor_options:
   chunk_output_type: console
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, message = F, warning = F, cache = T)
-```
 
-```{r}
+
+```{r include=FALSE}
 library(tidyverse)
 library(ggthemes)
 library(patchwork)
@@ -32,7 +30,9 @@ loadfonts(device = "win")
 ```
 
 
-```{r}
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = F, warning = F, cache = T)
+
 # Color Palette CEEW and font type
 my_custom_palette <- c("#575756", "#9d9d9c", "#D5d7dc", "#C3E5F5", "#71c9eb", "#009cd8", "#8db824", "#b4d48c", "#DDE9BA", "#EA5813", "#F49A70", "#FACAB1")
 
@@ -315,7 +315,7 @@ ggplot() +
   ) + # Adjust the position and size of the text
   geom_text(data = level4_indenergy_tot, aes(x = Year, y = value / 10^6, label = paste0(round(value / 10^6, 0))), vjust = -0.5, color = "black", size = 3) +
   labs(x = "", y = "Emissions (MtCO2e)", title = "Industry sector emissions") +
-  scale_fill_manual(values = my_custom_palette)+
+  scale_fill_manual(values = my_custom_palette) +
   theme(
     legend.position = "top",
     axis.text.x = element_text(size = 9, angle = 45, vjust = 0.8, hjust = 0.8)
@@ -329,6 +329,7 @@ ggsave("output_plots/industry_energy_emissions.png",
 ```
 
 ## IPPU Emissions
+
 ### Level 2
 ```{r}
 level2_ippu <- data %>%
@@ -352,7 +353,7 @@ ggplot() +
     data = totals, mapping = aes(x = Year, y = tot / 10^6, label = paste0(round(tot / 10^6, 0))),
     position = position_stack(vjust = 1.02), size = 3, color = "black"
   ) +
-  scale_fill_manual(values = my_custom_palette)+
+  scale_fill_manual(values = my_custom_palette) +
   labs(x = "", y = "Emissions (MtCO2e)", title = "IPPU sector emissions") +
   theme(
     axis.text.x = element_text(size = 9, angle = 45, vjust = 0.8, hjust = 0.8)
@@ -401,6 +402,7 @@ ggsave("output_plots/ippu_level3.png",
 ```
 
 ## Waste emissions
+
 ### Level 2
 ```{r}
 level2_waste <- data %>%
@@ -702,7 +704,7 @@ ggplot(level1_indus) +
     position = position_stack(vjust = 0.5), size = 3, color = "black"
   ) + # Adjust the position and size of the text
   labs(x = "", y = "Energy consumed (EJ)", caption = "EM: Public state yearly industry energy use emissions") +
- # scale_fill_manual(values = my_custom_palette) +
+  # scale_fill_manual(values = my_custom_palette) +
   theme(
     legend.position = "top",
     axis.text.x = element_text(size = 9, angle = 45, vjust = 0.8, hjust = 0.8)
@@ -754,122 +756,6 @@ ggsave("output_plots/power_generation.png",
 ```
 
 # Macroeconomy
-
-```{r eval=FALSE, include=FALSE}
-agri1 <- read_excel("data/GROSS STATE VALUE ADDED BY ECONOMIC ACTIVITY - AGRICULTURE.XLSX", sheet = "T_32(iii)", skip = 5, na = c("-", "-*")) %>% mutate(`...1` = gsub("\\*", "", `...1`))
-
-agri2 <- read_excel("data/GROSS STATE VALUE ADDED BY ECONOMIC ACTIVITY - AGRICULTURE.XLSX", sheet = "T_32(iv)", skip = 5, na = c("-", "-*")) %>%
-  slice(1:33) %>%
-  mutate(`...1` = gsub("\\*", "", `...1`))
-
-agri <- left_join(agri1, agri2, by = "...1") %>%
-  rename("State" = "...1") %>%
-  pivot_longer(cols = 2:13, names_to = "Year") %>%
-  mutate(sector = "Agriculture")
-###########################
-bank1 <- read_excel("data/GROSS STATE VALUE ADDED BY ECONOMIC ACTIVITY - BANKING AND INSURANCE.XLSX", sheet = "T_48(iii)", skip = 5, na = c("-", "-*"))
-bank2 <- read_excel("data/GROSS STATE VALUE ADDED BY ECONOMIC ACTIVITY - BANKING AND INSURANCE.XLSX", sheet = "T_48(iv)", skip = 5, na = c("-", "-*")) %>%
-  slice(1:33) %>%
-  mutate(...1 = gsub(x = ...1, "\\*", replacement = ""))
-
-bank <- left_join(bank1, bank2, by = "...1") %>%
-  rename("State" = "...1") %>%
-  pivot_longer(cols = 2:13, names_to = "Year") %>%
-  mutate(sector = "Banking")
-########################### 3
-cons1 <- read_excel(path = "data/GROSS STATE VALUE ADDED BY ECONOMIC ACTIVITY - CONSTRUCTION.XLSX", sheet = "T_40(iii)", skip = 5, na = c("-", "-*"))
-cons2 <- read_excel("data/GROSS STATE VALUE ADDED BY ECONOMIC ACTIVITY - CONSTRUCTION.XLSX", sheet = "T_40(iv)", skip = 5, na = c("-", "-*")) %>%
-  slice(1:33) %>%
-  mutate(...1 = gsub(x = ...1, "\\*", replacement = ""))
-
-cons <- left_join(cons1, cons2, by = "...1") %>%
-  rename("State" = "...1") %>%
-  pivot_longer(cols = 2:13, names_to = "Year") %>%
-  mutate(sector = "Construction")
-#############################
-ind1 <- read_excel(path = "data/GROSS STATE VALUE ADDED BY ECONOMIC ACTIVITY - INDUSTRY.XLSX", sheet = "T_44(iii)", skip = 5, na = c("-", "-*"))
-ind2 <- read_excel("data/GROSS STATE VALUE ADDED BY ECONOMIC ACTIVITY - INDUSTRY.XLSX", sheet = "T_44(iv)", skip = 5, na = c("-", "-*")) %>%
-  slice(1:33) %>%
-  mutate(...1 = gsub(x = ...1, "\\*", replacement = ""))
-
-ind <- left_join(ind1, ind2, by = "...1") %>%
-  rename("State" = "...1") %>%
-  pivot_longer(cols = 2:13, names_to = "Year") %>%
-  mutate(sector = "Industry")
-###################
-
-manf1 <- read_excel(path = "data/GROSS STATE VALUE ADDED BY ECONOMIC ACTIVITY - MANUFACTURING.XLSX", sheet = "T_36(iii)", skip = 5, na = c("-", "-*")) %>% mutate(`...1` = gsub("\\*", "", `...1`))
-
-manf2 <- read_excel("data/GROSS STATE VALUE ADDED BY ECONOMIC ACTIVITY - MANUFACTURING.XLSX", sheet = "T_36(iv)", skip = 5, na = c("-", "-*")) %>%
-  slice(1:33) %>%
-  mutate(...1 = gsub(x = ...1, "\\*", replacement = ""))
-
-manf <- left_join(manf1, manf2, by = "...1") %>%
-  rename("State" = "...1") %>%
-  pivot_longer(cols = 2:13, names_to = "Year") %>%
-  mutate(sector = "Manufacturing")
-####################
-
-serv1 <- read_excel(path = "data/GROSS STATE VALUE ADDED BY ECONOMIC ACTIVITY - SERVICES.XLSX", sheet = "T_52(iii)", skip = 5, na = c("-", "-*"))
-serv2 <- read_excel("data/GROSS STATE VALUE ADDED BY ECONOMIC ACTIVITY - SERVICES.XLSX", sheet = "T_52(iv)", skip = 5, na = c("-", "-*")) %>%
-  slice(1:33) %>%
-  mutate(...1 = gsub(x = ...1, "\\*", replacement = ""))
-
-serv <- left_join(serv1, serv2, by = "...1") %>%
-  rename("State" = "...1") %>%
-  pivot_longer(cols = 2:13, names_to = "Year") %>%
-  mutate(sector = "Services")
-####################
-
-GVA_economy <- bind_rows(agri, bank, cons, ind, manf, serv) %>%
-  mutate(State = trimws(State, "right")) %>%
-  group_by(Year, State) %>%
-  mutate(percent = round(value / sum(value) * 100, 0)) %>%
-  filter(State == "Gujarat") %>%
-  ungroup() %>%
-  group_by(sector) %>%
-  mutate(Change = (value - lag(value)) / lag(value) * 100) %>%
-  ungroup()
-
-
-tot <- GVA_economy %>%
-  group_by(State, Year) %>%
-  summarise(value = sum(value))
-
-ggplot(GVA_economy %>% filter(!Year %in% "2022-23")) +
-  geom_col(aes(x = Year, y = value / 100000, fill = sector)) +
-  geom_text(aes(x = Year, y = value / 100000, fill = sector, label = ifelse(percent > 2, paste0(percent, "%"), "")),
-    position = position_stack(vjust = 0.5), size = 3, color = "black"
-  ) +
-  geom_text(data = tot %>% filter(!Year %in% "2022-23"), mapping = aes(x = Year, y = value / 100000, label = round(value / 100000, 0), vjust = -0.5)) +
-  # ggthemes::theme_pander() +
-  labs(x = "", y = "GVA constant prices (000 crore rupees)", caption = "RBI handbook of Indian States") +
-  scale_fill_manual(values = my_custom_palette) +
-  theme(
-    legend.position = "top",
-    axis.text.x = element_text(size = 9, angle = 45, vjust = 0.8, hjust = 0.8)
-  ) +
-  guides(fill = guide_legend(nrow = 2)) # Set the number of rows in the legend
-
-
-ggsave(filename = "output_plots/GVA.png", device = "png", width = 8, height = 6)
-
-# Change in GVA- by sector
-
-ggplot() +
-  geom_line(GVA_economy, mapping = aes(x = Year, y = value / 100000, color = sector, group = sector)) +
-  geom_point(GVA_economy, mapping = aes(x = Year, y = value / 100000, color = sector, group = sector), size = 2) +
-  geom_text_repel(GVA_economy %>% filter(Year != "2011-12"), mapping = aes(x = Year, y = value / 100000, label = paste0(round(Change, 1), "%"), group = sector, color = sector), vjust = -0.5, max.overlaps = Inf, size = 3) +
-  scale_y_continuous(sec.axis = sec_axis(~., name = "GVA by sector (000 crores)")) +
-  scale_color_uchicago() +
-  ggthemes::theme_pander() +
-  labs(x = "", y = "GVA by sector (000 crores)", caption = "RBI: handbook of states in India") +
-  theme(
-    legend.position = "top",
-    axis.text.x = element_text(size = 9, angle = 45, vjust = 0.8, hjust = 0.8)
-  ) +
-  guides(fill = guide_legend(nrow = 2)) # Set the number of rows in the legend
-```
 
 ```{r}
 ## From Niti Aayog website
